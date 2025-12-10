@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Users, Eye, Heart, Star, Sparkles, ChevronRight, ArrowUpRight, Lock, Shield, 
-  CheckCircle, Zap, Calendar, X
+  CheckCircle, Zap, Calendar, X, PenTool
 } from 'lucide-react';
 import { DashboardSidebar, DashboardHeader, MatchCard, StatCard, RequestCard, EventCard, SectionHeader } from './DashboardWidgets';
 import ProfileSetupWizard from './ProfileSetupWizard';
@@ -19,9 +19,13 @@ import CommunitySearch from './CommunitySearch';
 import CommunicationCenter from './CommunicationCenter';
 import MembershipPage from './MembershipPage';
 import ProfileDetailModal from './ProfileDetailModal';
+import InvitationMaker from './InvitationMaker';
+import UserSettings from './UserSettings';
 import { ConnectionsView, InterestsView, ShortlistView, ActivityView, EventsView, VisitorsView } from './InteractionViews';
 import PremiumButton from '../ui/PremiumButton';
 import { generateMockProfiles, MOCK_REQUESTS, MOCK_EVENTS, Profile, ActivityLog } from '../../utils/mockData';
+import useLocalStorage from '../../hooks/useLocalStorage';
+import useTranslation from '../../hooks/useTranslation';
 
 interface UserDashboardProps {
   onLogout: () => void;
@@ -42,17 +46,21 @@ const Toast: React.FC<{ message: string, onClose: () => void }> = ({ message, on
 );
 
 const UserDashboard: React.FC<UserDashboardProps> = ({ onLogout, toggleTheme, darkMode }) => {
+  const { t } = useTranslation();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showSetupWizard, setShowSetupWizard] = useState(false);
-  const [currentView, setCurrentView] = useState<'overview' | 'photos' | 'matches' | 'search' | 'advanced-search' | 'keyword-search' | 'community-search' | 'verification' | 'messages' | 'horoscope' | 'enhancements' | 'membership' | 'connections' | 'interests' | 'shortlist' | 'activity' | 'events' | 'visitors'>('overview');
+  const [currentView, setCurrentView] = useState<'overview' | 'photos' | 'matches' | 'search' | 'advanced-search' | 'keyword-search' | 'community-search' | 'verification' | 'messages' | 'horoscope' | 'enhancements' | 'membership' | 'connections' | 'interests' | 'shortlist' | 'activity' | 'events' | 'visitors' | 'invitations' | 'settings'>('overview');
   
-  // Data States
+  // Data States with Persistence
   const [activeMatchTab, setActiveMatchTab] = useState<'daily' | 'premium' | 'new'>('daily');
   const [matches, setMatches] = useState<Profile[]>([]);
-  const [requests, setRequests] = useState(MOCK_REQUESTS);
-  const [interests, setInterests] = useState<any[]>([]); // Mock received interests
-  const [shortlisted, setShortlisted] = useState<Profile[]>([]);
+  
+  // Persisted States
+  const [requests, setRequests] = useLocalStorage('mdm_requests', MOCK_REQUESTS);
+  const [shortlisted, setShortlisted] = useLocalStorage<Profile[]>('mdm_shortlisted', []);
+  const [interests, setInterests] = useLocalStorage<any[]>('mdm_interests', []);
+  
   const [activityLog, setActivityLog] = useState<ActivityLog[]>([]);
   
   // Modal State
@@ -61,16 +69,18 @@ const UserDashboard: React.FC<UserDashboardProps> = ({ onLogout, toggleTheme, da
   // Toast State
   const [toast, setToast] = useState<string | null>(null);
 
-  // Verification State Lifted for Access Control
-  const [verificationStatus, setVerificationStatus] = useState<'idle' | 'pending' | 'under_review' | 'verified' | 'rejected'>(() => {
-    const email = localStorage.getItem('mdm_email');
-    const demoEmails = ['demo@user.com', 'demo@broker.com', 'demo@parent.com'];
-    if (email && demoEmails.includes(email)) return 'verified';
-    return 'idle';
-  });
+  // Verification State Lifted for Access Control & Persisted
+  const [verificationStatus, setVerificationStatus] = useLocalStorage<'idle' | 'pending' | 'under_review' | 'verified' | 'rejected'>('mdm_verification_status', 'idle');
 
   // Load Mock Data
   useEffect(() => {
+    // Check if verification is needed based on demo login
+    const email = localStorage.getItem('mdm_email');
+    const demoEmails = ['demo@user.com', 'demo@broker.com', 'demo@parent.com'];
+    if (email && demoEmails.includes(email) && verificationStatus === 'idle') {
+       setVerificationStatus('verified');
+    }
+
     const pool = generateMockProfiles(30);
     const scored = pool.map(p => ({...p, matchScore: Math.floor(Math.random() * (98 - 70) + 70)}));
     setMatches(scored);
@@ -96,13 +106,16 @@ const UserDashboard: React.FC<UserDashboardProps> = ({ onLogout, toggleTheme, da
   };
 
   const handleConnect = (profile: Profile) => {
-     // Check if already connected/requested? (Simplified: just fire)
      logActivity('connect', `Sent connection request to ${profile.name}`, profile);
      showToast(`Request sent to ${profile.name}`);
-     // Ideally add to an "outgoing requests" state here
   };
 
   const handleInterest = (profile: Profile) => {
+     // Persist interest
+     const exists = interests.find(p => p.id === profile.id);
+     if (!exists) {
+        setInterests(prev => [...prev, profile]);
+     }
      logActivity('interest', `Expressed interest in ${profile.name}`, profile);
      showToast(`Interest sent to ${profile.name}`);
   };
@@ -148,6 +161,11 @@ const UserDashboard: React.FC<UserDashboardProps> = ({ onLogout, toggleTheme, da
 
   // --- RENDER CONTENT SWITCHER ---
   const renderContent = () => {
+    if (currentView === 'invitations') {
+       return <InvitationMaker onBack={() => setCurrentView('overview')} />;
+    }
+
+    // Access Control Logic - Keep settings accessible even if unverified
     if ((currentView === 'matches' || currentView === 'messages' || currentView === 'search' || currentView === 'advanced-search' || currentView === 'keyword-search' || currentView === 'community-search') && verificationStatus !== 'verified') {
        return (
          <motion.div 
@@ -191,6 +209,7 @@ const UserDashboard: React.FC<UserDashboardProps> = ({ onLogout, toggleTheme, da
        case 'activity': return <ActivityView activityLog={activityLog} />;
        case 'events': return <EventsView />;
        case 'visitors': return <VisitorsView visitors={generateMockProfiles(10).map((p, i) => ({ id: i.toString(), profile: p, visitTime: `${i+2}h ago`, visitCount: 1 }))} />;
+       case 'settings': return <UserSettings />;
        default:
           // OVERVIEW DASHBOARD
           return (
@@ -216,10 +235,10 @@ const UserDashboard: React.FC<UserDashboardProps> = ({ onLogout, toggleTheme, da
                       <Sparkles size={12} /> Premium Member
                     </motion.div>
                     <h1 className="text-3xl md:text-5xl font-display font-bold mb-4 leading-tight">
-                      Good Morning, <br/> Karthik
+                      {t('dash.welcome')}, <br/> Sribalamanigandan
                     </h1>
                     <p className="text-purple-100 max-w-lg text-base md:text-lg leading-relaxed opacity-90">
-                      You have <strong>{requests.length} new requests</strong> and <strong>12 new matches</strong> waiting for you today.
+                      You have <strong>{requests.length} {t('dash.newReq')}</strong> and <strong>12 {t('dash.newMatch')}</strong> waiting for you today.
                     </p>
                   </div>
 
@@ -245,22 +264,33 @@ const UserDashboard: React.FC<UserDashboardProps> = ({ onLogout, toggleTheme, da
               {/* 2. STATS GRID */}
               <section className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
                 <div onClick={() => setCurrentView('visitors')} className="cursor-pointer">
-                   <StatCard label="Profile Views" value="124" trend="+12%" icon={<Eye size={24} />} color="bg-blue-500" />
+                   <StatCard label={t('dash.visitors')} value="124" trend="+12%" icon={<Eye size={24} />} color="bg-blue-500" />
                 </div>
                 <div onClick={() => setCurrentView('interests')} className="cursor-pointer">
-                   <StatCard label="Interests" value={interests.length || 8} trend="+2" icon={<Heart size={24} />} color="bg-pink-500" />
+                   <StatCard label={t('dash.interests')} value={interests.length || 0} trend="+2" icon={<Heart size={24} />} color="bg-pink-500" />
                 </div>
-                <div onClick={() => setCurrentView('shortlist')} className="cursor-pointer">
-                   <StatCard label="Shortlisted" value={shortlisted.length || 15} icon={<Star size={24} />} color="bg-amber-500" />
+                <div onClick={() => setCurrentView('invitations')} className="cursor-pointer group">
+                   <motion.div 
+                      whileHover={{ y: -5 }}
+                      className="bg-gradient-to-br from-purple-500 to-indigo-600 p-5 rounded-3xl border border-transparent shadow-lg relative overflow-hidden text-white h-full"
+                   >
+                      <div className="absolute top-0 right-0 p-16 bg-white/10 rounded-full blur-2xl -mr-8 -mt-8" />
+                      <div className="flex justify-between items-start mb-4 relative z-10">
+                         <div className="p-3 rounded-2xl bg-white/20"><PenTool size={24} /></div>
+                         <span className="text-xs font-bold bg-white/20 px-2 py-1 rounded-full">New</span>
+                      </div>
+                      <h4 className="text-xl font-display font-bold mb-1">Create Invite</h4>
+                      <p className="text-xs text-purple-100">Design digital cards</p>
+                   </motion.div>
                 </div>
                 <div onClick={() => setCurrentView('matches')} className="cursor-pointer">
-                   <StatCard label="Matches" value="42" icon={<Users size={24} />} color="bg-purple-500" />
+                   <StatCard label={t('dash.matches')} value="42" icon={<Users size={24} />} color="bg-purple-500" />
                 </div>
               </section>
 
               {/* 3. PENDING REQUESTS */}
               <section>
-                 <SectionHeader title="Pending Requests" subtitle="People who want to connect with you" action="View All" onAction={() => setCurrentView('connections')} />
+                 <SectionHeader title={t('dash.pending')} subtitle="People who want to connect with you" action={t('common.viewAll')} onAction={() => setCurrentView('connections')} />
                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                     <AnimatePresence>
                        {requests.length > 0 ? (
@@ -357,7 +387,7 @@ const UserDashboard: React.FC<UserDashboardProps> = ({ onLogout, toggleTheme, da
                     <div className="bg-white dark:bg-[#121212] rounded-[2.5rem] p-6 border border-gray-100 dark:border-white/5 shadow-lg">
                        <div className="flex justify-between items-center mb-6">
                           <h3 className="font-bold">Recent Visitors</h3>
-                          <button onClick={() => setCurrentView('visitors')} className="text-xs font-bold text-purple-600 hover:underline">View All</button>
+                          <button onClick={() => setCurrentView('visitors')} className="text-xs font-bold text-purple-600 hover:underline">{t('common.viewAll')}</button>
                        </div>
                        <div className="grid grid-cols-4 gap-4">
                           {[1,2,3,4,5,6,7,8].map((i) => (
@@ -381,7 +411,7 @@ const UserDashboard: React.FC<UserDashboardProps> = ({ onLogout, toggleTheme, da
 
               {/* 7. COMMUNITY EVENTS */}
               <section>
-                 <SectionHeader title="Community Events" subtitle="Meetups and exclusive gatherings" action="View All Events" onAction={() => setCurrentView('events')} />
+                 <SectionHeader title="Community Events" subtitle="Meetups and exclusive gatherings" action={t('common.viewAll')} onAction={() => setCurrentView('events')} />
                  <div className="overflow-x-auto pb-4 hide-scrollbar -mx-4 px-4 md:mx-0 md:px-0">
                     <div className="flex gap-6 min-w-max">
                        {MOCK_EVENTS.map((event, idx) => (

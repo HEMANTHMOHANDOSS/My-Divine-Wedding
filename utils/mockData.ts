@@ -217,3 +217,18 @@ export const MOCK_CALL_LOGS = [
   { id: 'cl2', name: 'Divya S', type: 'video', direction: 'outgoing', duration: '0:00', time: 'Yesterday, 6:30 PM', missed: true },
   { id: 'cl3', name: 'Ananya R', type: 'audio', direction: 'outgoing', duration: '12:45', time: 'Mon, 4:15 PM' },
 ];
+
+// --- BROKER MOCKS ---
+export const MOCK_CLIENTS = [
+  { id: 'C-101', name: 'Arjun Reddy', age: 28, status: 'Active', plan: 'Platinum', matches: 12, pending: 3, img: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?q=80&w=1887&auto=format&fit=crop' },
+  { id: 'C-102', name: 'Priya Sharma', age: 26, status: 'Review', plan: 'Gold', matches: 8, pending: 5, img: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=1887&auto=format&fit=crop' },
+  { id: 'C-103', name: 'Karthik V', age: 29, status: 'Active', plan: 'Diamond', matches: 24, pending: 1, img: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=1974&auto=format&fit=crop' },
+  { id: 'C-104', name: 'Ananya S', age: 25, status: 'Pending', plan: 'Gold', matches: 0, pending: 0, img: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=1964&auto=format&fit=crop' },
+];
+
+export const MOCK_ACTIVITIES = [
+  { id: 1, type: 'match', text: 'New match generated for Arjun Reddy', time: '10 min ago', color: 'bg-purple-500' },
+  { id: 2, type: 'payment', text: 'Commission received: ₹15,000', time: '1 hour ago', color: 'bg-green-500' },
+  { id: 3, type: 'call', text: 'Scheduled call with Priya\'s parents', time: '2 hours ago', color: 'bg-blue-500' },
+  { id: 4, type: 'alert', text: 'Verification pending for ID #9921', time: '5 hours ago', color: 'bg-amber-500' },
+];

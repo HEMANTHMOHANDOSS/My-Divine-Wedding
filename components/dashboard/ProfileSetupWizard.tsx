@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
@@ -8,6 +9,7 @@ import PremiumButton from '../ui/PremiumButton';
 import { AnimatedInput, AnimatedSelect, AnimatedTextArea, FileUpload, TagSelector, RadioGroup, AnimatedPhoneInput } from '../profile/ProfileFormElements';
 import { validateField, calculateAge } from '../../utils/validation';
 import { RAASI_LIST, NAKSHATRA_LIST } from '../../constants';
+import Logo from '../ui/Logo';
 
 interface ProfileSetupWizardProps {
   onComplete: () => void;
@@ -126,7 +128,7 @@ const ProfileSetupWizard: React.FC<ProfileSetupWizardProps> = ({ onComplete, onE
       {/* HEADER */}
       <div className="sticky top-0 z-50 bg-white/80 dark:bg-black/80 backdrop-blur-md border-b border-gray-200 dark:border-white/10 px-6 py-4 flex justify-between items-center">
         <div className="flex items-center gap-3">
-           <img src="/logo.png" alt="Logo" className="w-10 h-10 object-contain drop-shadow-sm" />
+           <Logo className="w-10 h-10" />
            <div>
               <h1 className="font-bold text-lg leading-tight">Complete Profile</h1>
               <p className="text-xs text-gray-500 dark:text-gray-400">Step {currentStep + 1} of {steps.length}</p>

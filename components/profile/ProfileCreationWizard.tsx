@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
@@ -8,36 +9,43 @@ import PremiumButton from '../ui/PremiumButton';
 import { AnimatedInput, AnimatedSelect, AnimatedTextArea, FileUpload, TagSelector, RadioGroup, AnimatedPhoneInput } from '../profile/ProfileFormElements';
 import { validateField, calculateAge } from '../../utils/validation';
 import { RAASI_LIST, NAKSHATRA_LIST } from '../../constants';
+import BrokerRegistration from '../broker/BrokerRegistration';
+import Logo from '../ui/Logo';
+import useLocalStorage from '../../hooks/useLocalStorage';
+import useTranslation from '../../hooks/useTranslation';
 
 interface ProfileCreationWizardProps {
   onComplete: () => void;
   onExit?: () => void; 
 }
 
-const steps = [
-  { id: 0, title: 'Basic Info', icon: <User size={20} /> },
-  { id: 1, title: 'Religion', icon: <Shield size={20} /> },
-  { id: 2, title: 'Horoscope', icon: <Moon size={20} /> },
-  { id: 3, title: 'Physical', icon: <Ruler size={20} /> },
-  { id: 4, title: 'Career', icon: <BookOpen size={20} /> },
-  { id: 5, title: 'Family', icon: <Home size={20} /> },
-  { id: 6, title: 'Lifestyle', icon: <Coffee size={20} /> },
-  { id: 7, title: 'Contact', icon: <Phone size={20} /> },
-  { id: 8, title: 'Media', icon: <Camera size={20} /> },
-  { id: 9, title: 'Review', icon: <CheckCircle size={20} /> },
-];
-
 const ProfileCreationWizard: React.FC<ProfileCreationWizardProps> = ({ onComplete, onExit }) => {
-  const [step, setStep] = useState(0); 
-  const [currentStep, setCurrentStep] = useState(0); 
-  const [profileType, setProfileType] = useState<'user' | 'broker' | null>(null);
-  const [relation, setRelation] = useState<'myself' | 'son' | 'daughter' | 'friend' | 'sibling' | 'relative' | null>(null);
+  const { t } = useTranslation();
+  
+  const steps = [
+    { id: 0, title: t('prof.step.basic'), icon: <User size={20} /> },
+    { id: 1, title: t('prof.step.religion'), icon: <Shield size={20} /> },
+    { id: 2, title: t('prof.step.horoscope'), icon: <Moon size={20} /> },
+    { id: 3, title: t('prof.step.physical'), icon: <Ruler size={20} /> },
+    { id: 4, title: t('prof.step.career'), icon: <BookOpen size={20} /> },
+    { id: 5, title: t('prof.step.family'), icon: <Home size={20} /> },
+    { id: 6, title: t('prof.step.lifestyle'), icon: <Coffee size={20} /> },
+    { id: 7, title: t('prof.step.contact'), icon: <Phone size={20} /> },
+    { id: 8, title: t('prof.step.media'), icon: <Camera size={20} /> },
+    { id: 9, title: t('prof.step.review'), icon: <CheckCircle size={20} /> },
+  ];
+
+  // Persist Wizard State
+  const [step, setStep] = useLocalStorage<number>('mdm_wizard_step', 0);
+  const [currentStep, setCurrentStep] = useLocalStorage<number>('mdm_wizard_currentSubStep', 0);
+  const [profileType, setProfileType] = useLocalStorage<'user' | 'broker' | null>('mdm_wizard_profileType', null);
+  const [relation, setRelation] = useLocalStorage<'myself' | 'son' | 'daughter' | 'friend' | 'sibling' | 'relative' | null>('mdm_wizard_relation', null);
+  
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [brokerTermsAccepted, setBrokerTermsAccepted] = useState(false);
   const [profileScore, setProfileScore] = useState(0);
   
   // --- FORM DATA & VALIDATION STATE ---
-  const [formData, setFormData] = useState<any>({
+  const [formData, setFormData] = useLocalStorage<any>('mdm_wizard_formData', {
     mobileCode: '+91', mobile: '', guardianContactCode: '+91', guardianContact: '',
     firstName: '', lastName: '', dob: '', gender: '', maritalStatus: '', motherTongue: '',
     religion: '', caste: '', subCaste: '', gothram: '', dosham: 'no', raasi: '', nakshatra: '',
@@ -46,13 +54,10 @@ const ProfileCreationWizard: React.FC<ProfileCreationWizardProps> = ({ onComplet
     fatherJob: '', motherJob: '', siblings: '0', familyType: 'nuclear', familyValues: 'traditional', nativePlace: '',
     diet: 'veg', smoking: 'no', drinking: 'no', hobbies: [], bio: '',
     email: '', altMobile: '', address: '', city: '', state: '', country: 'India',
-    fullName: '', agencyName: '', brokerType: '', yearsExperience: '', matches: '', officeAddress: '',
-    specializations: '', pricingModel: '', serviceCharges: '', digitalSignature: ''
   });
   
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [touched, setTouched] = useState<Record<string, boolean>>({});
-  const [isEmailVerified, setIsEmailVerified] = useState(false);
 
   // Scroll to top on step change
   useEffect(() => {
@@ -67,7 +72,6 @@ const ProfileCreationWizard: React.FC<ProfileCreationWizardProps> = ({ onComplet
     setProfileScore(score);
   }, [formData]);
 
-  // ... (validation and handlers same as before) ...
   const handleChange = (name: string, value: any) => {
     setFormData((prev: any) => ({ ...prev, [name]: value }));
     let extraData = null;
@@ -100,7 +104,6 @@ const ProfileCreationWizard: React.FC<ProfileCreationWizardProps> = ({ onComplet
     if (step === 0) return !!profileType;
     if (step === 1 && profileType === 'user') return !!relation;
     
-    // User Steps Validation using currentStep logic for the detailed wizard
     if (profileType === 'user') {
         const requiredFields: string[] = [];
         if (currentStep === 0) requiredFields.push('firstName', 'lastName', 'dob', 'gender', 'maritalStatus', 'motherTongue');
@@ -115,13 +118,6 @@ const ProfileCreationWizard: React.FC<ProfileCreationWizardProps> = ({ onComplet
         return !hasEmpty && !hasErrors;
     }
 
-    if (profileType === 'broker') {
-        if (step === 2) return !errors.fullName && formData.fullName && formData.gender && !errors.mobile && formData.mobile && isEmailVerified;
-        if (step === 3) return !errors.agencyName && formData.agencyName && !errors.yearsExperience;
-        if (step === 4) return !!formData.pricingModel;
-        if (step === 6) return brokerTermsAccepted && !!formData.digitalSignature && !errors.digitalSignature;
-    }
-
     return true;
   };
 
@@ -132,12 +128,12 @@ const ProfileCreationWizard: React.FC<ProfileCreationWizardProps> = ({ onComplet
     }
     
     if (profileType === 'user' && step >= 2) {
-       // Inside user detailed flow
        if (currentStep < 9) setCurrentStep(prev => prev + 1);
        else handleComplete();
     } else {
-       // Main flow
-       if (step === 0 && profileType === 'broker') setStep(2);
+       if (step === 0 && profileType === 'broker') {
+          setStep(2); 
+       }
        else setStep(prev => prev + 1);
     }
   };
@@ -146,14 +142,8 @@ const ProfileCreationWizard: React.FC<ProfileCreationWizardProps> = ({ onComplet
     if (profileType === 'user' && step >= 2 && currentStep > 0) {
         setCurrentStep(prev => prev - 1);
     } else {
-        if (step === 2 && profileType === 'broker') setStep(0);
-        else setStep(prev => prev - 1);
+        setStep(prev => prev - 1);
     }
-  };
-
-  const getProgress = () => {
-    if (profileType === 'user') return Math.min(100, Math.round(((currentStep + 1) / 10) * 100));
-    return Math.min(100, Math.max(0, (step - 1) * 20));
   };
 
   const handleGenerateBio = () => {
@@ -164,8 +154,47 @@ const ProfileCreationWizard: React.FC<ProfileCreationWizardProps> = ({ onComplet
   const handleComplete = () => {
     if (!isStepValid()) return;
     setIsSubmitting(true);
+
+    const newUser = {
+      id: `USR-${Date.now()}`,
+      name: `${formData.firstName} ${formData.lastName}`,
+      email: formData.email,
+      mobile: `${formData.mobileCode} ${formData.mobile}`,
+      role: 'user',
+      status: 'active',
+      plan: 'free',
+      joinedDate: new Date().toISOString().split('T')[0],
+      lastActive: 'Just now',
+      verified: false,
+      reports: 0,
+      safetyScore: 80,
+      religion: formData.religion,
+      caste: formData.caste,
+      age: calculateAge(formData.dob),
+      gender: formData.gender,
+      location: `${formData.city}, ${formData.country}`,
+      avatar: `https://i.pravatar.cc/150?u=${Date.now()}`,
+      profileScore: profileScore,
+      about: formData.bio,
+      familyType: formData.familyType,
+      education: formData.education,
+      occupation: formData.occupation,
+      income: formData.income,
+      ...formData
+    };
+
+    const existingUsers = JSON.parse(localStorage.getItem('mdm_users') || '[]');
+    const updatedUsers = existingUsers.filter((u: any) => u.email !== newUser.email);
+    localStorage.setItem('mdm_users', JSON.stringify([newUser, ...updatedUsers]));
+    localStorage.setItem('mdm_email', formData.email);
+
     setTimeout(() => {
       setIsSubmitting(false);
+      window.localStorage.removeItem('mdm_wizard_step');
+      window.localStorage.removeItem('mdm_wizard_currentSubStep');
+      window.localStorage.removeItem('mdm_wizard_profileType');
+      window.localStorage.removeItem('mdm_wizard_relation');
+      window.localStorage.removeItem('mdm_wizard_formData');
       onComplete();
     }, 2500);
   };
@@ -173,12 +202,11 @@ const ProfileCreationWizard: React.FC<ProfileCreationWizardProps> = ({ onComplet
   if (isSubmitting) return (
     <div className="min-h-[80vh] flex flex-col items-center justify-center">
        <div className="animate-spin w-16 h-16 border-4 border-purple-500 border-t-transparent rounded-full mb-4"></div>
-       <p className="text-xl font-bold">Processing...</p>
+       <p className="text-xl font-bold">{t('common.loading')}</p>
     </div>
   );
 
-  // Simplified User Logic reuse
-  const renderUserForm = () => (
+  return (
     <div className="max-w-4xl mx-auto space-y-8">
        {/* Responsive Step Indicator */}
        <div className="flex justify-start md:justify-between mb-8 md:mb-12 relative overflow-x-auto pb-4 custom-scrollbar -mx-4 px-4 md:mx-0 md:px-0">
@@ -207,18 +235,18 @@ const ProfileCreationWizard: React.FC<ProfileCreationWizardProps> = ({ onComplet
                 {/* 0. Basic Info */}
                 {currentStep === 0 && (
                    <div className="space-y-6">
-                      <h2 className="text-2xl font-bold mb-6 flex items-center gap-2"><User className="text-purple-500" /> Basic Information</h2>
+                      <h2 className="text-2xl font-bold mb-6 flex items-center gap-2"><User className="text-purple-500" /> {t('prof.step.basic')}</h2>
                       <div className="grid md:grid-cols-2 gap-6">
-                         <AnimatedInput label="First Name" value={formData.firstName} onChange={e => handleChange('firstName', e.target.value)} onBlur={() => handleBlur('firstName')} error={touched.firstName ? errors.firstName : undefined} />
-                         <AnimatedInput label="Last Name" value={formData.lastName} onChange={e => handleChange('lastName', e.target.value)} onBlur={() => handleBlur('lastName')} error={touched.lastName ? errors.lastName : undefined} />
+                         <AnimatedInput label={t('prof.label.fname')} value={formData.firstName} onChange={e => handleChange('firstName', e.target.value)} onBlur={() => handleBlur('firstName')} error={touched.firstName ? errors.firstName : undefined} />
+                         <AnimatedInput label={t('prof.label.lname')} value={formData.lastName} onChange={e => handleChange('lastName', e.target.value)} onBlur={() => handleBlur('lastName')} error={touched.lastName ? errors.lastName : undefined} />
                       </div>
                       <div className="grid md:grid-cols-2 gap-6">
-                         <AnimatedInput label="Date of Birth" type="date" value={formData.dob} onChange={e => handleChange('dob', e.target.value)} onBlur={() => handleBlur('dob')} error={touched.dob ? errors.dob : undefined} />
-                         <AnimatedSelect label="Gender" options={[{label:'Male',value:'male'}, {label:'Female',value:'female'}]} value={formData.gender} onChange={e => handleChange('gender', e.target.value)} />
+                         <AnimatedInput label={t('prof.label.dob')} type="date" value={formData.dob} onChange={e => handleChange('dob', e.target.value)} onBlur={() => handleBlur('dob')} error={touched.dob ? errors.dob : undefined} />
+                         <AnimatedSelect label={t('prof.label.gender')} options={[{label:'Male',value:'male'}, {label:'Female',value:'female'}]} value={formData.gender} onChange={e => handleChange('gender', e.target.value)} />
                       </div>
                       <div className="grid md:grid-cols-2 gap-6">
-                         <AnimatedSelect label="Marital Status" options={[{label:'Never Married',value:'never_married'}, {label:'Divorced',value:'divorced'}, {label:'Widowed',value:'widowed'}]} value={formData.maritalStatus} onChange={e => handleChange('maritalStatus', e.target.value)} />
-                         <AnimatedInput label="Mother Tongue" value={formData.motherTongue} onChange={e => handleChange('motherTongue', e.target.value)} />
+                         <AnimatedSelect label={t('prof.label.marital')} options={[{label:'Never Married',value:'never_married'}, {label:'Divorced',value:'divorced'}, {label:'Widowed',value:'widowed'}]} value={formData.maritalStatus} onChange={e => handleChange('maritalStatus', e.target.value)} />
+                         <AnimatedInput label={t('prof.label.tongue')} value={formData.motherTongue} onChange={e => handleChange('motherTongue', e.target.value)} />
                       </div>
                    </div>
                 )}
@@ -226,26 +254,26 @@ const ProfileCreationWizard: React.FC<ProfileCreationWizardProps> = ({ onComplet
                 {/* 1. Religion */}
                 {currentStep === 1 && (
                    <div className="space-y-6">
-                      <h2 className="text-2xl font-bold mb-6 flex items-center gap-2"><Shield className="text-purple-500" /> Religious Details</h2>
+                      <h2 className="text-2xl font-bold mb-6 flex items-center gap-2"><Shield className="text-purple-500" /> {t('prof.step.religion')}</h2>
                       <div className="grid md:grid-cols-2 gap-6">
-                         <AnimatedInput label="Religion" value={formData.religion} onChange={e => handleChange('religion', e.target.value)} error={touched.religion ? errors.religion : undefined} />
-                         <AnimatedInput label="Caste" value={formData.caste} onChange={e => handleChange('caste', e.target.value)} error={touched.caste ? errors.caste : undefined} />
+                         <AnimatedInput label={t('prof.label.religion')} value={formData.religion} onChange={e => handleChange('religion', e.target.value)} error={touched.religion ? errors.religion : undefined} />
+                         <AnimatedInput label={t('prof.label.caste')} value={formData.caste} onChange={e => handleChange('caste', e.target.value)} error={touched.caste ? errors.caste : undefined} />
                       </div>
                       <div className="grid md:grid-cols-2 gap-6">
                          <AnimatedInput label="Sub Caste (Optional)" value={formData.subCaste} onChange={e => handleChange('subCaste', e.target.value)} />
-                         <AnimatedInput label="Gothram" value={formData.gothram} onChange={e => handleChange('gothram', e.target.value)} onBlur={() => handleBlur('gothram')} error={touched.gothram ? errors.gothram : undefined} />
+                         <AnimatedInput label={t('prof.label.gothram')} value={formData.gothram} onChange={e => handleChange('gothram', e.target.value)} onBlur={() => handleBlur('gothram')} error={touched.gothram ? errors.gothram : undefined} />
                       </div>
-                      <RadioGroup label="Do you have Dosham?" options={[{label:'No', value:'no'}, {label:'Yes', value:'yes'}, {label:'Don\'t Know', value:'dont_know'}]} value={formData.dosham} onChange={v => handleChange('dosham', v)} />
+                      <RadioGroup label={t('prof.label.dosham')} options={[{label:'No', value:'no'}, {label:'Yes', value:'yes'}, {label:'Don\'t Know', value:'dont_know'}]} value={formData.dosham} onChange={v => handleChange('dosham', v)} />
                    </div>
                 )}
 
                 {/* 2. Horoscope */}
                 {currentStep === 2 && (
                    <div className="space-y-8">
-                      <h2 className="text-2xl font-bold mb-2 flex items-center gap-2"><Moon className="text-purple-500" /> Horoscope Details</h2>
+                      <h2 className="text-2xl font-bold mb-2 flex items-center gap-2"><Moon className="text-purple-500" /> {t('prof.step.horoscope')}</h2>
                       
                       <div className="space-y-3">
-                          <label className="text-sm font-bold text-gray-700 dark:text-gray-300 ml-1">Select Raasi</label>
+                          <label className="text-sm font-bold text-gray-700 dark:text-gray-300 ml-1">{t('prof.label.raasi')}</label>
                           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
                              {RAASI_LIST.map((r) => (
                                <motion.div
@@ -264,7 +292,7 @@ const ProfileCreationWizard: React.FC<ProfileCreationWizardProps> = ({ onComplet
 
                       <div className="mt-8">
                          <AnimatedSelect 
-                            label="Select Nakshatra" 
+                            label={t('prof.label.nakshatra')}
                             value={formData.nakshatra}
                             onChange={(e) => handleChange('nakshatra', e.target.value)}
                             options={NAKSHATRA_LIST.map(n => ({ value: n.id, label: `${n.sanskrit} (${n.english})` }))}
@@ -273,10 +301,90 @@ const ProfileCreationWizard: React.FC<ProfileCreationWizardProps> = ({ onComplet
                    </div>
                 )}
 
+                {/* 3. Physical */}
+                {currentStep === 3 && (
+                 <div className="space-y-6">
+                    <h2 className="text-2xl font-bold mb-6 flex items-center gap-2"><Ruler className="text-purple-500" /> {t('prof.step.physical')}</h2>
+                    <div className="grid md:grid-cols-2 gap-6">
+                       <AnimatedInput label={t('prof.label.height')} value={formData.height} onChange={e => handleChange('height', e.target.value)} onBlur={() => handleBlur('height')} error={touched.height ? errors.height : undefined} />
+                       <AnimatedInput label={t('prof.label.weight')} numericOnly value={formData.weight} onChange={e => handleChange('weight', e.target.value)} onBlur={() => handleBlur('weight')} error={touched.weight ? errors.weight : undefined} />
+                    </div>
+                    <div className="grid md:grid-cols-2 gap-6">
+                       <AnimatedSelect label="Body Type" options={[{label:'Slim',value:'slim'}, {label:'Athletic',value:'athletic'}, {label:'Average',value:'average'}, {label:'Heavy',value:'heavy'}]} value={formData.bodyType} onChange={e => handleChange('bodyType', e.target.value)} />
+                       <AnimatedSelect label="Complexion" options={[{label:'Fair',value:'fair'}, {label:'Wheatish',value:'wheatish'}, {label:'Dark',value:'dark'}]} value={formData.complexion} onChange={e => handleChange('complexion', e.target.value)} />
+                    </div>
+                    <RadioGroup label="Physical Status" options={[{label:'Normal', value:'normal'}, {label:'Physically Challenged', value:'challenged'}]} value={formData.physicalStatus} onChange={v => handleChange('physicalStatus', v)} />
+                 </div>
+                )}
+
+                {/* 4. Career */}
+                {currentStep === 4 && (
+                 <div className="space-y-6">
+                    <h2 className="text-2xl font-bold mb-6 flex items-center gap-2"><BookOpen className="text-purple-500" /> {t('prof.step.career')}</h2>
+                    <AnimatedInput label={t('prof.label.edu')} value={formData.education} onChange={e => handleChange('education', e.target.value)} error={touched.education ? errors.education : undefined} />
+                    <AnimatedInput label="College / University" value={formData.college} onChange={e => handleChange('college', e.target.value)} />
+                    <div className="grid md:grid-cols-2 gap-6">
+                       <AnimatedInput label={t('prof.label.job')} value={formData.occupation} onChange={e => handleChange('occupation', e.target.value)} error={touched.occupation ? errors.occupation : undefined} />
+                       <AnimatedSelect label="Work Type" options={[{label:'Private',value:'private'}, {label:'Government',value:'govt'}, {label:'Business',value:'business'}]} value={formData.workType} onChange={e => handleChange('workType', e.target.value)} />
+                    </div>
+                    <div className="grid md:grid-cols-2 gap-6">
+                        <AnimatedInput label="Company Name" value={formData.company} onChange={e => handleChange('company', e.target.value)} />
+                        <AnimatedInput label={t('prof.label.income')} numericOnly formatter="currency" value={formData.income} onChange={e => handleChange('income', e.target.value)} error={touched.income ? errors.income : undefined} />
+                    </div>
+                 </div>
+                )}
+
+                {/* 5. Family */}
+                {currentStep === 5 && (
+                 <div className="space-y-6">
+                    <h2 className="text-2xl font-bold mb-6 flex items-center gap-2"><Home className="text-purple-500" /> {t('prof.step.family')}</h2>
+                    <div className="grid md:grid-cols-2 gap-6">
+                       <AnimatedInput label="Father's Occupation" value={formData.fatherJob} onChange={e => handleChange('fatherJob', e.target.value)} error={touched.fatherJob ? errors.fatherJob : undefined} />
+                       <AnimatedInput label="Mother's Occupation" value={formData.motherJob} onChange={e => handleChange('motherJob', e.target.value)} />
+                    </div>
+                    <div className="grid md:grid-cols-2 gap-6">
+                       <AnimatedSelect label="Number of Siblings" options={[{label:'None',value:'0'}, {label:'1',value:'1'}, {label:'2',value:'2'}, {label:'3+',value:'3'}]} value={formData.siblings} onChange={e => handleChange('siblings', e.target.value)} />
+                       <AnimatedInput label="Native Place" value={formData.nativePlace} onChange={e => handleChange('nativePlace', e.target.value)} />
+                    </div>
+                    <RadioGroup label="Family Type" options={[{label:'Nuclear', value:'nuclear'}, {label:'Joint', value:'joint'}]} value={formData.familyType} onChange={v => handleChange('familyType', v)} />
+                    <RadioGroup label="Family Values" options={[{label:'Traditional', value:'traditional'}, {label:'Moderate', value:'moderate'}, {label:'Liberal', value:'liberal'}]} value={formData.familyValues} onChange={v => handleChange('familyValues', v)} />
+                 </div>
+                )}
+
+                {/* 6. Lifestyle */}
+                {currentStep === 6 && (
+                 <div className="space-y-6">
+                    <h2 className="text-2xl font-bold mb-6 flex items-center gap-2"><Coffee className="text-purple-500" /> {t('prof.step.lifestyle')}</h2>
+                    <RadioGroup label={t('prof.label.diet')} options={[{label:'Vegetarian', value:'veg'}, {label:'Non-Vegetarian', value:'non_veg'}, {label:'Eggetarian', value:'egg'}, {label:'Vegan', value:'vegan'}]} value={formData.diet} onChange={v => handleChange('diet', v)} />
+                    <div className="grid md:grid-cols-2 gap-6">
+                        <RadioGroup label={t('prof.label.smoke')} options={[{label:'No', value:'no'}, {label:'Yes', value:'yes'}, {label:'Occasionally', value:'occasionally'}]} value={formData.smoking} onChange={v => handleChange('smoking', v)} />
+                        <RadioGroup label={t('prof.label.drink')} options={[{label:'No', value:'no'}, {label:'Yes', value:'yes'}, {label:'Occasionally', value:'occasionally'}]} value={formData.drinking} onChange={v => handleChange('drinking', v)} />
+                    </div>
+                    
+                    <TagSelector 
+                        label="Hobbies & Interests" 
+                        options={['Traveling', 'Music', 'Reading', 'Cooking', 'Fitness', 'Photography', 'Movies', 'Sports', 'Art']} 
+                        selected={formData.hobbies} 
+                        onChange={tags => handleChange('hobbies', tags)} 
+                    />
+
+                    <div className="relative">
+                        <AnimatedTextArea label={t('prof.label.bio')} value={formData.bio} onChange={e => handleChange('bio', e.target.value)} onBlur={() => handleBlur('bio')} error={touched.bio ? errors.bio : undefined} />
+                        <button 
+                            type="button" 
+                            onClick={handleGenerateBio}
+                            className="absolute top-2 right-2 flex items-center gap-1 text-[10px] bg-purple-100 dark:bg-purple-900/30 text-purple-600 px-2 py-1 rounded-md hover:bg-purple-200 transition-colors"
+                        >
+                            <Sparkles size={12} /> AI Generate
+                        </button>
+                    </div>
+                 </div>
+                )}
+
                 {/* 7. Contact */}
                 {currentStep === 7 && (
                    <div className="space-y-6">
-                      <h2 className="text-2xl font-bold mb-6 flex items-center gap-2"><Phone className="text-purple-500" /> Contact Details</h2>
+                      <h2 className="text-2xl font-bold mb-6 flex items-center gap-2"><Phone className="text-purple-500" /> {t('prof.step.contact')}</h2>
                       <AnimatedInput label="Email" value={formData.email} onChange={e => handleChange('email', e.target.value)} onBlur={() => handleBlur('email')} error={touched.email ? errors.email : undefined} />
                       <div className="grid md:grid-cols-2 gap-6">
                           <AnimatedPhoneInput label="Mobile" value={formData.mobile} countryCode={formData.mobileCode} onCountryCodeChange={c => handleChange('mobileCode', c)} onPhoneChange={p => handleChange('mobile', p)} onBlur={() => handleBlur('mobile')} error={touched.mobile ? errors.mobile : undefined} />
@@ -285,12 +393,63 @@ const ProfileCreationWizard: React.FC<ProfileCreationWizardProps> = ({ onComplet
                    </div>
                 )}
 
-                {/* Fallback steps */}
-                {[3,4,5,6,8,9].includes(currentStep) && (
-                    <div className="text-center py-20">
-                        <h3 className="text-xl font-bold mb-4">Step {steps[currentStep].title}</h3>
-                        <p className="text-gray-500">Form fields for this section go here.</p>
+                {/* 8. Media */}
+                {currentStep === 8 && (
+                 <div className="space-y-6">
+                    <h2 className="text-2xl font-bold mb-6 flex items-center gap-2"><Camera className="text-purple-500" /> {t('prof.step.media')}</h2>
+                    <div className="grid md:grid-cols-2 gap-8">
+                        <FileUpload label="Profile Photos (Max 5)" multiple accept="image/*" onFileSelect={() => {}} />
+                        <FileUpload label="Intro Video (Optional)" accept="video/mp4" onFileSelect={() => {}} />
                     </div>
+                    <div className="mt-8 p-6 bg-purple-50 dark:bg-purple-900/20 rounded-2xl border border-purple-100 dark:border-white/10">
+                        <h4 className="font-bold flex items-center gap-2 mb-2"><Sparkles size={16} /> AI Enhancement</h4>
+                        <p className="text-sm text-gray-500 mb-4">Our AI can automatically enhance lighting and check photo quality.</p>
+                        <label className="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" className="w-4 h-4 accent-purple-600" defaultChecked />
+                            <span className="text-sm">Enable AI Enhancement</span>
+                        </label>
+                    </div>
+                 </div>
+                )}
+                
+                {/* 9. Review */}
+                {currentStep === 9 && (
+                 <div className="space-y-8">
+                     <div className="text-center mb-8">
+                        <h2 className="text-3xl font-bold mb-2">Review Your Profile</h2>
+                        <p className="text-gray-500">Please verify all details before submitting.</p>
+                     </div>
+
+                     <div className="grid md:grid-cols-2 gap-6">
+                         {Object.entries({
+                             "Basic Details": ['firstName', 'lastName', 'gender', 'dob', 'maritalStatus'],
+                             "Religion": ['religion', 'caste', 'gothram'],
+                             "Horoscope": ['raasi', 'nakshatra'],
+                             "Physical": ['height', 'weight', 'bodyType'],
+                             "Career": ['occupation', 'company', 'income'],
+                             "Family": ['familyType', 'nativePlace'],
+                             "Lifestyle": ['diet', 'smoking', 'drinking'],
+                         }).map(([section, fields]) => (
+                             <div key={section} className="bg-white/40 dark:bg-black/40 rounded-xl p-5 border border-gray-100 dark:border-white/5 relative group">
+                                 <h4 className="font-bold text-lg mb-3 border-b border-gray-200 dark:border-white/10 pb-2">{section}</h4>
+                                 <button 
+                                     onClick={() => setCurrentStep(steps.findIndex(s => s.title.includes(section.split(' ')[0])))}
+                                     className="absolute top-4 right-4 p-2 bg-white dark:bg-white/10 rounded-full text-purple-600 opacity-0 group-hover:opacity-100 transition-opacity shadow-sm"
+                                 >
+                                     <Edit2 size={14} />
+                                 </button>
+                                 <div className="space-y-2">
+                                     {fields.map(f => (
+                                         <div key={f} className="flex justify-between text-sm">
+                                             <span className="text-gray-500 capitalize">{f.replace(/([A-Z])/g, ' $1')}:</span>
+                                             <span className="font-medium truncate max-w-[50%] text-right">{formData[f] || '-'}</span>
+                                         </div>
+                                     ))}
+                                 </div>
+                             </div>
+                         ))}
+                     </div>
+                 </div>
                 )}
 
              </motion.div>
@@ -299,108 +458,12 @@ const ProfileCreationWizard: React.FC<ProfileCreationWizardProps> = ({ onComplet
 
        <div className="flex justify-between pt-4 pb-10">
           <button onClick={prevStep} className="flex items-center gap-2 px-4 py-2 text-gray-500 font-medium">
-             <ArrowLeft size={18} /> Previous
+             <ArrowLeft size={18} /> {t('common.back')}
           </button>
           <PremiumButton onClick={currentStep === 9 ? handleComplete : nextStep}>
-             {currentStep === 9 ? 'Submit Profile' : 'Next Step'}
+             {currentStep === 9 ? t('common.submit') : t('common.next')}
           </PremiumButton>
        </div>
-    </div>
-  );
-
-  // Broker form placeholder
-  const renderBrokerForm = () => (
-     <div className="max-w-3xl mx-auto space-y-8 px-4">
-        {/* Progress bar */}
-        <div className="mb-8">
-           <div className="flex justify-between text-sm font-bold text-gray-500">
-              <span>Broker Registration</span>
-              <span>{getProgress()}%</span>
-           </div>
-           <div className="h-2 bg-gray-200 rounded-full mt-2 overflow-hidden">
-              <div className="h-full bg-emerald-500" style={{ width: `${getProgress()}%` }} />
-           </div>
-        </div>
-        
-        {/* Form Container */}
-        <div className="bg-white/60 dark:bg-white/5 backdrop-blur-xl rounded-[2rem] p-6 md:p-10 shadow-xl">
-           <h3 className="text-2xl font-bold mb-6">Broker Details</h3>
-           {step === 2 && (
-              <div className="space-y-4">
-                 <AnimatedInput label="Full Name" value={formData.fullName} onChange={e => handleChange('fullName', e.target.value)} />
-                 <AnimatedPhoneInput label="Mobile" value={formData.mobile} countryCode={formData.mobileCode} onCountryCodeChange={c => handleChange('mobileCode', c)} onPhoneChange={p => handleChange('mobile', p)} />
-              </div>
-           )}
-           {step > 2 && <p className="text-center py-10">Step {step} content...</p>}
-        </div>
-
-        <div className="flex justify-between">
-           <button onClick={prevStep} className="flex items-center gap-2 px-4 py-2 text-gray-500 font-medium"><ArrowLeft size={18} /> Back</button>
-           <PremiumButton onClick={step === 6 ? handleComplete : nextStep}>{step === 6 ? 'Submit' : 'Next'}</PremiumButton>
-        </div>
-     </div>
-  );
-
-  // Initial Logic: Profile Type Selection
-  if (step === 0) {
-     return (
-        <div className="min-h-screen pt-24 px-4 container mx-auto max-w-5xl">
-           <div className="text-center space-y-4 mb-12">
-              <h2 className="text-3xl md:text-5xl font-display font-bold">Welcome to My Divine Wedding</h2>
-              <p className="text-lg text-gray-500">Choose your path to get started.</p>
-           </div>
-           <div className="grid md:grid-cols-2 gap-6 max-w-3xl mx-auto">
-              <div onClick={() => setProfileType('user')} className={`p-8 rounded-3xl border-2 cursor-pointer transition-all ${profileType === 'user' ? 'border-purple-600 bg-purple-50 dark:bg-purple-900/20' : 'border-gray-200 dark:border-white/10 hover:border-purple-300'}`}>
-                 <Heart className="w-12 h-12 text-purple-600 mb-4" />
-                 <h3 className="text-xl font-bold mb-2">Personal Profile</h3>
-                 <p className="text-sm text-gray-500">For myself, my child, or a relative.</p>
-              </div>
-              <div onClick={() => setProfileType('broker')} className={`p-8 rounded-3xl border-2 cursor-pointer transition-all ${profileType === 'broker' ? 'border-emerald-600 bg-emerald-50 dark:bg-emerald-900/20' : 'border-gray-200 dark:border-white/10 hover:border-emerald-300'}`}>
-                 <Briefcase className="w-12 h-12 text-emerald-600 mb-4" />
-                 <h3 className="text-xl font-bold mb-2">Professional Broker</h3>
-                 <p className="text-sm text-gray-500">For matchmakers and agencies.</p>
-              </div>
-           </div>
-           <div className="flex justify-center mt-12">
-              <PremiumButton onClick={nextStep} disabled={!profileType} icon={<ArrowRight />}>Continue</PremiumButton>
-           </div>
-        </div>
-     )
-  }
-
-  // Relation Selection
-  if (step === 1 && profileType === 'user') {
-     return (
-        <div className="min-h-screen pt-24 px-4 container mx-auto max-w-4xl text-center">
-           <h2 className="text-3xl font-bold mb-8">Who is this profile for?</h2>
-           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-              {['Myself', 'Son', 'Daughter', 'Sibling', 'Friend', 'Relative'].map(rel => (
-                 <div key={rel} onClick={() => setRelation(rel.toLowerCase() as any)} className={`p-6 rounded-2xl border-2 cursor-pointer ${relation === rel.toLowerCase() ? 'border-purple-600 bg-purple-50 dark:bg-white/10' : 'border-gray-200 dark:border-white/10'}`}>
-                    <span className="font-bold">{rel}</span>
-                 </div>
-              ))}
-           </div>
-           <div className="flex justify-center gap-4 mt-12">
-              <button onClick={prevStep} className="text-gray-500">Back</button>
-              <PremiumButton onClick={nextStep} disabled={!relation}>Next Step</PremiumButton>
-           </div>
-        </div>
-     )
-  }
-
-  return (
-    <div className="min-h-screen pt-24 pb-20 px-4 transition-colors duration-500 relative">
-      <AnimatePresence mode="wait">
-         <motion.div
-            key={step}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.4 }}
-         >
-            {profileType === 'user' ? renderUserForm() : renderBrokerForm()}
-         </motion.div>
-      </AnimatePresence>
     </div>
   );
 };

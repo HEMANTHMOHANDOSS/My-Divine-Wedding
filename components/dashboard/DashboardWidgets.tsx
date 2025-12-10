@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
@@ -7,6 +8,8 @@ import {
   SlidersHorizontal, Sun, Tag, Globe, Crown, Loader2, CheckCircle, Eye,
   Activity, AlertTriangle, ThumbsUp, ThumbsDown
 } from 'lucide-react';
+import Logo from '../ui/Logo';
+import useTranslation from '../../hooks/useTranslation';
 
 // --- MAGNETIC CARD WRAPPER ---
 export const MagneticCard: React.FC<{ children: React.ReactNode; className?: string }> = ({ children, className = "" }) => {
@@ -214,27 +217,28 @@ interface SidebarProps {
 export const DashboardSidebar: React.FC<SidebarProps> = ({ 
   collapsed, toggleCollapse, onLogout, currentView = 'overview', onViewChange, isMobileOpen, closeMobile, menuItems
 }) => {
-  // Default Items if not provided
+  const { t } = useTranslation();
+
+  // Default Items if not provided (Translated)
   const items = menuItems || [
-    { id: 'overview', icon: <Home size={20} />, label: 'Overview' },
-    { id: 'search', icon: <Search size={20} />, label: 'Basic Search' },
-    { id: 'keyword-search', icon: <Tag size={20} />, label: 'Keyword Search' },
-    { id: 'advanced-search', icon: <SlidersHorizontal size={20} />, label: 'Advanced Search' },
-    { id: 'community-search', icon: <Globe size={20} />, label: 'Community Search' },
-    { id: 'matches', icon: <Users size={20} />, label: 'Matches', badge: '12' },
-    { id: 'connections', icon: <Users size={20} />, label: 'Connections' },
-    { id: 'interests', icon: <Heart size={20} />, label: 'Interests' },
-    { id: 'shortlist', icon: <Star size={20} />, label: 'Shortlist' },
-    { id: 'activity', icon: <TrendingUp size={20} />, label: 'Activity' },
-    { id: 'events', icon: <Calendar size={20} />, label: 'Events' },
-    { id: 'visitors', icon: <Eye size={20} />, label: 'Visitors' },
-    { id: 'messages', icon: <MessageCircle size={20} />, label: 'Messages', badge: '3' },
+    { id: 'overview', icon: <Home size={20} />, label: t('dash.overview') },
+    { id: 'matches', icon: <Users size={20} />, label: t('dash.matches'), badge: '12' },
+    { id: 'search', icon: <Search size={20} />, label: t('dash.search') },
+    { id: 'keyword-search', icon: <Tag size={20} />, label: t('dash.keySearch') },
+    { id: 'advanced-search', icon: <SlidersHorizontal size={20} />, label: t('dash.advSearch') },
+    { id: 'community-search', icon: <Globe size={20} />, label: t('dash.commSearch') },
+    { id: 'connections', icon: <Users size={20} />, label: t('dash.requests') },
+    { id: 'messages', icon: <MessageCircle size={20} />, label: t('dash.messages'), badge: '3' },
+    { id: 'interests', icon: <Heart size={20} />, label: t('dash.interests') },
+    { id: 'shortlist', icon: <Star size={20} />, label: t('dash.shortlist') },
+    { id: 'activity', icon: <TrendingUp size={20} />, label: t('dash.activity') },
+    { id: 'events', icon: <Calendar size={20} />, label: t('dash.events') },
+    { id: 'visitors', icon: <Eye size={20} />, label: t('dash.visitors') },
+    { id: 'photos', icon: <Camera size={20} />, label: t('dash.photos') },
+    { id: 'horoscope', icon: <Moon size={20} />, label: t('dash.horoscope') },
+    { id: 'verification', icon: <Shield size={20} />, label: t('dash.verification'), badge: '!' },
     { id: 'membership', icon: <Crown size={20} />, label: 'Membership' },
-    { id: 'enhancements', icon: <Zap size={20} />, label: 'Enhancements', badge: 'New' },
-    { id: 'photos', icon: <Camera size={20} />, label: 'Photos & Video' },
-    { id: 'horoscope', icon: <Moon size={20} />, label: 'Horoscope' },
-    { id: 'verification', icon: <Shield size={20} />, label: 'ID Verification', badge: '!' },
-    { id: 'settings', icon: <Settings size={20} />, label: 'Settings' },
+    { id: 'settings', icon: <Settings size={20} />, label: t('dash.settings') },
   ];
 
   // Mobile Drawer Overlay
@@ -258,7 +262,7 @@ export const DashboardSidebar: React.FC<SidebarProps> = ({
           >
              <div className="p-6 flex items-center justify-between border-b border-gray-100 dark:border-white/5">
                 <div className="flex items-center gap-3">
-                   <img src="/logo.png" alt="Logo" className="w-8 h-8 object-contain" />
+                   <Logo className="w-8 h-8" />
                    <span className="font-display font-bold text-xl">Divine Wedding</span>
                 </div>
                 <button onClick={closeMobile} className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-white/5">
@@ -290,7 +294,7 @@ export const DashboardSidebar: React.FC<SidebarProps> = ({
              </div>
              <div className="p-4 border-t border-gray-100 dark:border-white/5">
                 <button onClick={onLogout} className="w-full flex items-center gap-3 px-4 py-3 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-xl transition-colors font-medium">
-                   <LogOut size={20} /> Logout
+                   <LogOut size={20} /> {t('dash.logout')}
                 </button>
              </div>
           </motion.div>
@@ -316,7 +320,7 @@ export const DashboardSidebar: React.FC<SidebarProps> = ({
               animate={{ opacity: 1 }} 
               className="flex items-center gap-3"
              >
-                <img src="/logo.png" alt="Logo" className="w-8 h-8 object-contain" />
+                <Logo className="w-8 h-8" />
                 <span className="font-display font-bold text-lg bg-clip-text text-transparent bg-gradient-to-r from-purple-600 to-pink-600 dark:from-white dark:to-gray-400">Divine Wedding</span>
              </motion.div>
           )}
@@ -365,7 +369,7 @@ export const DashboardSidebar: React.FC<SidebarProps> = ({
         <div className="p-4 border-t border-gray-200 dark:border-white/10">
           <button onClick={onLogout} className="w-full flex items-center gap-4 px-4 py-3 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-xl transition-colors">
             <div className={`${collapsed ? 'mx-auto' : ''}`}><LogOut size={20} /></div>
-            {!collapsed && <span className="font-medium">Logout</span>}
+            {!collapsed && <span className="font-medium">{t('dash.logout')}</span>}
           </button>
         </div>
       </motion.div>
@@ -380,6 +384,7 @@ export const DashboardHeader: React.FC<{
   onMenuClick: () => void 
 }> = ({ toggleTheme, darkMode, onMenuClick }) => {
   const [scrolled, setScrolled] = useState(false);
+  const { t } = useTranslation();
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
@@ -403,7 +408,7 @@ export const DashboardHeader: React.FC<{
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-purple-500 transition-colors" size={18} />
           <input 
             type="text" 
-            placeholder="Search matches by ID, Name or Keyword..." 
+            placeholder={t('common.search')}
             className="w-full bg-gray-100 dark:bg-white/5 border border-transparent focus:border-purple-500/30 rounded-full py-2.5 pl-10 pr-4 text-sm outline-none transition-all duration-300 focus:bg-white dark:focus:bg-black focus:shadow-lg focus:shadow-purple-500/10"
           />
         </div>
@@ -425,7 +430,7 @@ export const DashboardHeader: React.FC<{
         
         <div className="flex items-center gap-3 cursor-pointer group">
           <div className="text-right hidden md:block">
-            <div className="text-sm font-bold text-gray-900 dark:text-white">Karthik R.</div>
+            <div className="text-sm font-bold text-gray-900 dark:text-white">Sribalamanigandan G</div>
             <div className="text-xs text-gray-500 dark:text-gray-400">ID: MDM9823</div>
           </div>
           <div className="relative w-9 h-9 md:w-10 md:h-10 rounded-full overflow-hidden border-2 border-white dark:border-white/10 shadow-lg group-hover:border-purple-500 transition-colors">
@@ -440,7 +445,7 @@ export const DashboardHeader: React.FC<{
 // --- MATCH CARD COMPONENT ---
 interface MatchCardProps {
   match: {
-    id?: string; // Add ID for handlers
+    id?: string;
     name: string;
     age: number;
     height: string;
@@ -453,10 +458,11 @@ interface MatchCardProps {
   onConnect?: (profile: any) => void;
   onInterest?: (profile: any) => void;
   onShortlist?: (profile: any) => void;
-  onViewProfile?: (profile: any) => void; // New
+  onViewProfile?: (profile: any) => void;
 }
 
 export const MatchCard: React.FC<MatchCardProps> = ({ match, delay = 0, onConnect, onInterest, onShortlist, onViewProfile }) => {
+  const { t } = useTranslation();
   const [connecting, setConnecting] = useState(false);
   const [shortlisted, setShortlisted] = useState(false);
   const [interested, setInterested] = useState(false);
@@ -481,11 +487,6 @@ export const MatchCard: React.FC<MatchCardProps> = ({ match, delay = 0, onConnec
     setShortlisted(!shortlisted);
     if(onShortlist) onShortlist(match);
   };
-
-  // Convert match prop to expected Profile format for handlers if needed, 
-  // or parent passes handlers that already know context.
-  // Ideally match object should carry full profile data or we re-fetch.
-  // For UI simplicity we pass 'match' which has basic details.
 
   return (
     <MagneticCard className="h-full w-full">
@@ -538,7 +539,7 @@ export const MatchCard: React.FC<MatchCardProps> = ({ match, delay = 0, onConnec
                    initial={{ strokeDashoffset: 283 }}
                    whileInView={{ strokeDashoffset: 283 - (283 * match.matchScore) / 100 }}
                    transition={{ duration: 1.5, delay: 0.5 }}
-                   strokeLinecap="round"
+                   strokeLinecap="round" 
                  />
                </svg>
                <span className="absolute text-[9px] md:text-[10px] font-bold text-white">{match.matchScore}%</span>
@@ -567,14 +568,14 @@ export const MatchCard: React.FC<MatchCardProps> = ({ match, delay = 0, onConnec
                 onClick={(e) => { e.stopPropagation(); onViewProfile && onViewProfile(match); }}
                 className="flex-1 py-2 rounded-xl bg-gray-100 dark:bg-white/5 text-gray-900 dark:text-white font-bold text-xs hover:bg-gray-200 dark:hover:bg-white/10 transition-colors"
               >
-                Profile
+                {t('dash.profile.view')}
               </button>
               <button 
                 onClick={handleConnect}
                 disabled={connecting}
                 className="flex-1 py-2 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold text-xs shadow-md shadow-purple-500/20 hover:shadow-purple-500/40 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-1"
               >
-                {connecting ? <Loader2 size={12} className="animate-spin" /> : 'Connect'}
+                {connecting ? <Loader2 size={12} className="animate-spin" /> : t('dash.profile.connect')}
               </button>
            </div>
         </div>
