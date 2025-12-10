@@ -2,7 +2,7 @@
 import React, { useRef } from 'react';
 import { motion, useScroll, useTransform } from 'framer-motion';
 import { SUCCESS_STORIES } from '../constants';
-import { Quote, ArrowRight } from 'lucide-react';
+import { Quote, ArrowRight, Calendar, MapPin } from 'lucide-react';
 import PremiumButton from './ui/PremiumButton';
 import useTranslation from '../hooks/useTranslation';
 
@@ -96,7 +96,7 @@ const StoryCard: React.FC<{ story: any, index: number, onClick: () => void }> = 
           <span className="text-gold-400 text-sm font-bold uppercase tracking-widest">{story.date}</span>
         </div>
       </div>
-    </StoryCard>
+    </motion.div>
   )
 }
 

@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   MessageSquare, Phone, Video, Search, MoreVertical, Send, Plus, 
-  ArrowLeft, Shield, Lock, MicOff, PhoneOff, VideoOff, AlertTriangle, Sparkles, User, FileText, Calendar, PenTool
+  ArrowLeft, Shield, Lock, MicOff, PhoneOff, VideoOff, AlertTriangle, Sparkles, User, FileText, Calendar, PenTool, Users
 } from 'lucide-react';
 import { GoogleGenAI } from "@google/genai";
 import AudioProfile from './AudioProfile';
@@ -260,7 +260,7 @@ const BrokerCommunication: React.FC<BrokerCommunicationProps> = ({ mode = 'user'
                         <Calendar size={12} /> Schedule Call
                      </button>
                      <button className="flex items-center gap-1 px-3 py-1.5 bg-gray-100 dark:bg-white/5 text-gray-600 dark:text-gray-300 rounded-lg text-xs font-bold whitespace-nowrap hover:bg-gray-200">
-                        <User size={12} /> Host Parent Call
+                        <Users size={12} /> Host Parent Call
                      </button>
                   </div>
 
