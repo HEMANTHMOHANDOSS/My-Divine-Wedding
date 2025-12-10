@@ -2,9 +2,8 @@
 import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  Camera, Upload, Lock, Eye, EyeOff, Sparkles, Trash2, RefreshCw, 
-  CheckCircle, AlertTriangle, Shield, Play, X, Image as ImageIcon,
-  MoreVertical, Crop, AlertCircle
+  Camera, Upload, Lock, Eye, Sparkles, Trash2, RefreshCw, 
+  CheckCircle, AlertTriangle, Shield, Play, X, Crop, AlertCircle
 } from 'lucide-react';
 import PremiumButton from '../ui/PremiumButton';
 import { analyzePhotoQuality, simulateEnhancement, verifySelfieMatch } from '../../utils/mockAI';
@@ -100,8 +99,10 @@ const PhotosVideoModule: React.FC = () => {
       setSelfieImage(url);
       setSelfieStatus('verifying');
       
+      // Mock AI function returns 'matched' or 'failed'
+      // We map this to our local status types
       const result = await verifySelfieMatch();
-      setSelfieStatus(result);
+      setSelfieStatus(result === 'matched' ? 'verified' : 'failed');
     }
   };
 
@@ -293,7 +294,6 @@ const PhotosVideoModule: React.FC = () => {
                              {getPrivacyIcon(photo.privacy)}
                              {getPrivacyLabel(photo.privacy)}
                           </div>
-                          <MoreVertical size={14} className="text-gray-400" />
                        </div>
 
                        {/* Quality Bar */}
